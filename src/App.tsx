@@ -33,18 +33,136 @@ const REST_URL = import.meta.env.VITE_QORE_REST_URL ?? "/lcd";
 // project page, as the fest requires.
 const BUILDER_TESTNET_ADDRESS = "qor1d3schmtf6kaa4ppzt56822rc7rfyhjdfrdwec0";
 
-const box: React.CSSProperties = {
-  border: "1px solid #ddd",
-  borderRadius: 8,
-  padding: "1rem",
-  marginTop: "1.5rem",
+// ─── Design ────────────────────────────────────────────────────────────────
+// Light, polished look: soft indigo/violet gradient page, dark gradient hero,
+// white cards with soft shadows, indigo primary buttons.
+
+const page: React.CSSProperties = {
+  minHeight: "100vh",
+  fontFamily: "system-ui, sans-serif",
+  color: "#0f172a",
+  background:
+    "radial-gradient(640px 320px at 85% -10%, rgba(99, 102, 241, 0.20), transparent 70%)," +
+    "radial-gradient(520px 280px at 5% 0%, rgba(168, 85, 247, 0.16), transparent 70%)," +
+    "linear-gradient(180deg, #eef2ff 0%, #f8fafc 42%, #fdf4ff 100%)",
 };
+
+const hero: React.CSSProperties = {
+  background: "linear-gradient(135deg, #312e81 0%, #6d28d9 55%, #a21caf 100%)",
+  color: "#fff",
+  borderRadius: 20,
+  padding: "2rem 1.75rem",
+  boxShadow: "0 20px 45px rgba(76, 29, 149, 0.35)",
+};
+
+const badge: React.CSSProperties = {
+  display: "inline-block",
+  background: "rgba(255, 255, 255, 0.16)",
+  border: "1px solid rgba(255, 255, 255, 0.35)",
+  borderRadius: 999,
+  padding: "0.25rem 0.75rem",
+  fontSize: "0.8rem",
+  letterSpacing: "0.04em",
+  marginBottom: "1rem",
+};
+
+const card: React.CSSProperties = {
+  background: "#fff",
+  border: "1px solid #e2e8f0",
+  borderRadius: 16,
+  padding: "1.5rem",
+  marginTop: "1.25rem",
+  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.07)",
+};
+
+const sectionTitle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.6rem",
+  margin: "0 0 0.75rem",
+  fontSize: "1.15rem",
+};
+
+const stepBadge: React.CSSProperties = {
+  width: 28,
+  height: 28,
+  borderRadius: "50%",
+  background: "#4f46e5",
+  color: "#fff",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "0.9rem",
+  fontWeight: 700,
+  flexShrink: 0,
+};
+
 const input: React.CSSProperties = {
   width: "100%",
-  padding: "0.5rem",
+  padding: "0.6rem 0.75rem",
   boxSizing: "border-box",
   fontFamily: "inherit",
+  fontSize: "0.95rem",
+  color: "#0f172a",
+  background: "#f8fafc",
+  border: "1px solid #cbd5e1",
+  borderRadius: 10,
+  marginTop: "0.3rem",
 };
+
+const btnPrimary: React.CSSProperties = {
+  background: "#4f46e5",
+  color: "#fff",
+  border: "none",
+  borderRadius: 10,
+  padding: "0.65rem 1.1rem",
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
+const btnSecondary: React.CSSProperties = {
+  background: "#fff",
+  color: "#4f46e5",
+  border: "1px solid #cbd5e1",
+  borderRadius: 10,
+  padding: "0.65rem 1.1rem",
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
+const btnDisabled: React.CSSProperties = { opacity: 0.55, cursor: "not-allowed" };
+
+const bannerBase: React.CSSProperties = {
+  borderRadius: 10,
+  padding: "0.7rem 0.9rem",
+  marginTop: "1rem",
+  fontSize: "0.95rem",
+};
+
+const bannerNotice: React.CSSProperties = {
+  ...bannerBase,
+  background: "#ecfdf5",
+  border: "1px solid #a7f3d0",
+  color: "#065f46",
+};
+
+const bannerError: React.CSSProperties = {
+  ...bannerBase,
+  background: "#fef2f2",
+  border: "1px solid #fecaca",
+  color: "#991b1b",
+};
+
+const bannerMock: React.CSSProperties = {
+  ...bannerBase,
+  background: "#fffbeb",
+  border: "1px solid #fde68a",
+  color: "#92400e",
+};
+
+const muted: React.CSSProperties = { color: "#64748b" };
 
 function short(addr: string): string {
   return addr.length > 20 ? `${addr.slice(0, 12)}…${addr.slice(-8)}` : addr;
@@ -258,226 +376,261 @@ export function App(): JSX.Element {
   }
 
   return (
-    <main
-      style={{
-        fontFamily: "system-ui, sans-serif",
-        maxWidth: 760,
-        margin: "2rem auto",
-        padding: "0 1rem",
-        lineHeight: 1.5,
-      }}
-    >
-      <h1>Q-Will — Quantum-Resistant Digital Will</h1>
-      <p style={{ color: "#555" }}>
-        Write a final message, seal it with QoreSeal (ML-KEM-1024), and anchor the seal on the
-        QoreChain testnet ({QWILL_CHAIN_ID}) with ONE hybrid-signed transaction. The recipient
-        opens it after the release date — and only the recipient can open it.
-      </p>
-      <p style={{ color: "#555", fontSize: "0.9rem" }}>
-        Network: testnet · Builder (testnet address):{" "}
-        <code>{short(BUILDER_TESTNET_ADDRESS)}</code>
-      </p>
-      {mockMode && (
-        <p style={{ color: "#8a6d00", background: "#fff8d6", padding: "0.5rem" }}>
-          Mock QoreX mode (dev): the connection can be tested, but sending transactions
-          is disabled on this VM.
-        </p>
-      )}
-      {notice && <p style={{ color: "#0a7a2f" }}>{notice}</p>}
-      {error && (
-        <p style={{ color: "#b00020" }} role="alert">
-          {error}
-        </p>
-      )}
+    <div style={page}>
+      <main
+        style={{
+          maxWidth: 780,
+          margin: "0 auto",
+          padding: "2rem 1rem 1rem",
+          lineHeight: 1.5,
+        }}
+      >
+        <header style={hero}>
+          <span style={badge}>QoreChain Developer Fest · Quantum Pass</span>
+          <h1 style={{ margin: "0 0 0.75rem", fontSize: "1.9rem", lineHeight: 1.2 }}>
+            Q-Will — Quantum-Resistant Digital Will
+          </h1>
+          <p style={{ margin: 0, color: "#e0e7ff" }}>
+            Write a final message, seal it with QoreSeal (ML-KEM-1024), and anchor the
+            seal on the QoreChain testnet ({QWILL_CHAIN_ID}) with ONE hybrid-signed
+            transaction. The recipient opens it after the release date — and only the
+            recipient can open it.
+          </p>
+          <p style={{ margin: "1rem 0 0", color: "#c7d2fe", fontSize: "0.85rem" }}>
+            Network: testnet · Builder (testnet address):{" "}
+            <code>{short(BUILDER_TESTNET_ADDRESS)}</code>
+          </p>
+        </header>
 
-      <section style={box}>
-        <h2>1. Connect QoreX</h2>
-        <p>
-          {address ? (
-            <>
-              Connected: <code>{short(address)}</code> · Balance: {balance ?? "…"} · ML-DSA-87
-              key:{" "}
-              {pqcRegistered === null ? "…" : pqcRegistered ? "registered" : "not registered"}
-            </>
-          ) : (
-            "Not connected yet. Open this page in the QoreX in-app browser, or use the QoreX extension (Testnet)."
-          )}
-        </p>
-        <button onClick={() => void onConnect()} disabled={busy}>
-          {address ? "Reconnect" : "Connect QoreX"}
-        </button>
-        {!isQorexAvailable() && !mockMode && (
-          <p style={{ color: "#555", fontSize: "0.9rem" }}>
-            QoreX was not detected in this browser. On desktop without the extension, run dev
-            with <code>?mock-qorex=1</code> to test the connection UI (mock).
+        {mockMode && (
+          <p style={bannerMock}>
+            Mock QoreX mode (dev): the connection can be tested, but sending
+            transactions is disabled on this VM.
           </p>
         )}
-      </section>
-
-      <section style={box}>
-        <h2>2. My seal keys (for recipients)</h2>
-        <p style={{ fontSize: "0.9rem", color: "#555" }}>
-          Seal keys are created and stored ONLY in this browser (localStorage). Others
-          only need the key card (public key) to send you a sealed message. Never
-          share your seed/recovery phrase with anyone — this app never
-          asks for it.
-        </p>
-        <button onClick={() => void onShowKeyCard()}>Create / show my key card</button>
-        {keyCardText && (
-          <textarea
-            readOnly
-            value={keyCardText}
-            rows={4}
-            style={{ ...input, marginTop: "0.5rem" }}
-            aria-label="My key card"
-          />
+        {notice && <p style={bannerNotice}>{notice}</p>}
+        {error && (
+          <p style={bannerError} role="alert">
+            {error}
+          </p>
         )}
-        {hasLocalSealKeys() && !keyCardText && (
-          <p style={{ fontSize: "0.9rem" }}>This browser already has seal keys.</p>
-        )}
-      </section>
 
-      <section style={box}>
-        <h2>3. Create a will</h2>
-        <label>
-          Final message
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            rows={4}
-            style={input}
-            placeholder="Write a message for the recipient…"
-          />
-        </label>
-        <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Recipient address (qor1…)
-          <input
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            style={input}
-            placeholder="qor1…"
-          />
-        </label>
-        <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Recipient key card (from section 2 in the recipient's browser)
-          <textarea
-            value={recipientCard}
-            onChange={(e) => setRecipientCard(e.target.value)}
-            rows={3}
-            style={input}
-            placeholder='{"v":1,"kind":"qwill-key-card",…}'
-          />
-        </label>
-        <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Release date
-          <input
-            type="datetime-local"
-            value={releaseDate}
-            onChange={(e) => setReleaseDate(e.target.value)}
-            style={input}
-          />
-        </label>
-        <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
-          <button onClick={() => void onSeal()}>1. Seal message (offline)</button>
-          <button onClick={() => void onSendSeal()} disabled={busy || !sealed}>
-            2. Send seal on-chain (QoreX)
-          </button>
-        </div>
-        {sealed && (
-          <div style={{ marginTop: "0.75rem", fontSize: "0.9rem" }}>
-            <p>
-              Envelope: {sealed.envelope.length} bytes · hash:{" "}
-              <code>{sealed.envelopeHash.slice(0, 16)}…</code>
-            </p>
-            <p>
-              Seal memo ({sealMemo.length} bytes, max 256): <code>{sealMemo}</code>
-            </p>
-            <p>
-              Send value: {Number(QWILL_SEAL_AMOUNT_UQOR) / 1_000_000} QOR (symbolic).
-            </p>
-            {txHash && (
+        <section style={card}>
+          <h2 style={sectionTitle}>
+            <span style={stepBadge}>1</span> Connect QoreX
+          </h2>
+          <p style={muted}>
+            {address ? (
               <>
-                <p>
-                  Seal tx: <code>{txHash}</code>
-                </p>
-                <p>
-                  Open link for the recipient:
-                  <br />
-                  <code style={{ wordBreak: "break-all" }}>{shareLink()}</code>
-                </p>
+                Connected: <code>{short(address)}</code> · Balance: {balance ?? "…"} · ML-DSA-87
+                key:{" "}
+                {pqcRegistered === null ? "…" : pqcRegistered ? "registered" : "not registered"}
               </>
+            ) : (
+              "Not connected yet. Open this page in the QoreX in-app browser, or use the QoreX extension (Testnet)."
             )}
-          </div>
-        )}
-      </section>
-
-      <section style={box}>
-        <h2>4. Open a will (recipient)</h2>
-        <p style={{ fontSize: "0.9rem", color: "#555" }}>
-          Paste the envelope from the link, enter the seal transaction hash, then verify. The message
-          only opens when the seal is verified on-chain AND the release date has passed
-          AND this browser holds the recipient's seal keys.
-        </p>
-        <label>
-          Envelope (qoreseal:… text)
-          <textarea
-            value={openEnvelope}
-            onChange={(e) => setOpenEnvelope(e.target.value)}
-            rows={3}
-            style={input}
-            placeholder="qoreseal:…"
-          />
-        </label>
-        <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Seal transaction hash
-          <input
-            value={openTxHash}
-            onChange={(e) => setOpenTxHash(e.target.value)}
-            style={input}
-            placeholder="hex tx hash"
-          />
-        </label>
-        <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Recipient address (qor1…)
-          <input
-            value={openRecipient}
-            onChange={(e) => setOpenRecipient(e.target.value)}
-            style={input}
-            placeholder="qor1…"
-          />
-        </label>
-        <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Release date (unix seconds)
-          <input
-            value={openReleaseUnix}
-            onChange={(e) => setOpenReleaseUnix(e.target.value)}
-            style={input}
-            placeholder="e.g. 1796000000"
-          />
-        </label>
-        <button onClick={() => void onVerifyAndOpen()} style={{ marginTop: "0.75rem" }}>
-          Verify &amp; open
-        </button>
-        {anchorReport.length > 0 && (
-          <ul style={{ fontSize: "0.9rem" }}>
-            {anchorReport.map((r) => (
-              <li key={r}>{r}</li>
-            ))}
-          </ul>
-        )}
-        {openedMessage && (
-          <blockquote
-            style={{
-              borderLeft: "4px solid #0a7a2f",
-              margin: "1rem 0 0",
-              padding: "0.5rem 1rem",
-              background: "#f2fbf5",
-            }}
+          </p>
+          <button
+            onClick={() => void onConnect()}
+            disabled={busy}
+            style={busy ? { ...btnPrimary, ...btnDisabled } : btnPrimary}
           >
-            {openedMessage}
-          </blockquote>
-        )}
-      </section>
-    </main>
+            {address ? "Reconnect" : "Connect QoreX"}
+          </button>
+          {!isQorexAvailable() && !mockMode && (
+            <p style={{ ...muted, fontSize: "0.9rem" }}>
+              QoreX was not detected in this browser. On desktop without the extension, run dev
+              with <code>?mock-qorex=1</code> to test the connection UI (mock).
+            </p>
+          )}
+        </section>
+
+        <section style={card}>
+          <h2 style={sectionTitle}>
+            <span style={stepBadge}>2</span> My seal keys (for recipients)
+          </h2>
+          <p style={{ fontSize: "0.9rem", ...muted }}>
+            Seal keys are created and stored ONLY in this browser (localStorage). Others
+            only need the key card (public key) to send you a sealed message. Never
+            share your seed/recovery phrase with anyone — this app never asks for it.
+          </p>
+          <button onClick={() => void onShowKeyCard()} style={btnSecondary}>
+            Create / show my key card
+          </button>
+          {keyCardText && (
+            <textarea
+              readOnly
+              value={keyCardText}
+              rows={4}
+              style={{ ...input, marginTop: "0.75rem" }}
+              aria-label="My key card"
+            />
+          )}
+          {hasLocalSealKeys() && !keyCardText && (
+            <p style={{ fontSize: "0.9rem" }}>This browser already has seal keys.</p>
+          )}
+        </section>
+
+        <section style={card}>
+          <h2 style={sectionTitle}>
+            <span style={stepBadge}>3</span> Create a will
+          </h2>
+          <label>
+            Final message
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={4}
+              style={input}
+              placeholder="Write a message for the recipient…"
+            />
+          </label>
+          <label style={{ display: "block", marginTop: "0.75rem" }}>
+            Recipient address (qor1…)
+            <input
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              style={input}
+              placeholder="qor1…"
+            />
+          </label>
+          <label style={{ display: "block", marginTop: "0.75rem" }}>
+            Recipient key card (from section 2 in the recipient&apos;s browser)
+            <textarea
+              value={recipientCard}
+              onChange={(e) => setRecipientCard(e.target.value)}
+              rows={3}
+              style={input}
+              placeholder='{"v":1,"kind":"qwill-key-card",…}'
+            />
+          </label>
+          <label style={{ display: "block", marginTop: "0.75rem" }}>
+            Release date
+            <input
+              type="datetime-local"
+              value={releaseDate}
+              onChange={(e) => setReleaseDate(e.target.value)}
+              style={input}
+            />
+          </label>
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", flexWrap: "wrap" }}>
+            <button onClick={() => void onSeal()} style={btnPrimary}>
+              1. Seal message (offline)
+            </button>
+            <button
+              onClick={() => void onSendSeal()}
+              disabled={busy || !sealed}
+              style={busy || !sealed ? { ...btnPrimary, ...btnDisabled } : btnPrimary}
+            >
+              2. Send seal on-chain (QoreX)
+            </button>
+          </div>
+          {sealed && (
+            <div style={{ marginTop: "1rem", fontSize: "0.9rem" }}>
+              <p>
+                Envelope: {sealed.envelope.length} bytes · hash:{" "}
+                <code>{sealed.envelopeHash.slice(0, 16)}…</code>
+              </p>
+              <p>
+                Seal memo ({sealMemo.length} bytes, max 256): <code>{sealMemo}</code>
+              </p>
+              <p>
+                Send value: {Number(QWILL_SEAL_AMOUNT_UQOR) / 1_000_000} QOR (symbolic).
+              </p>
+              {txHash && (
+                <>
+                  <p>
+                    Seal tx: <code>{txHash}</code>
+                  </p>
+                  <p>
+                    Open link for the recipient:
+                    <br />
+                    <code style={{ wordBreak: "break-all" }}>{shareLink()}</code>
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section style={card}>
+          <h2 style={sectionTitle}>
+            <span style={stepBadge}>4</span> Open a will (recipient)
+          </h2>
+          <p style={{ fontSize: "0.9rem", ...muted }}>
+            Paste the envelope from the link, enter the seal transaction hash, then verify.
+            The message only opens when the seal is verified on-chain AND the release date
+            has passed AND this browser holds the recipient&apos;s seal keys.
+          </p>
+          <label>
+            Envelope (qoreseal:… text)
+            <textarea
+              value={openEnvelope}
+              onChange={(e) => setOpenEnvelope(e.target.value)}
+              rows={3}
+              style={input}
+              placeholder="qoreseal:…"
+            />
+          </label>
+          <label style={{ display: "block", marginTop: "0.75rem" }}>
+            Seal transaction hash
+            <input
+              value={openTxHash}
+              onChange={(e) => setOpenTxHash(e.target.value)}
+              style={input}
+              placeholder="hex tx hash"
+            />
+          </label>
+          <label style={{ display: "block", marginTop: "0.75rem" }}>
+            Recipient address (qor1…)
+            <input
+              value={openRecipient}
+              onChange={(e) => setOpenRecipient(e.target.value)}
+              style={input}
+              placeholder="qor1…"
+            />
+          </label>
+          <label style={{ display: "block", marginTop: "0.75rem" }}>
+            Release date (unix seconds)
+            <input
+              value={openReleaseUnix}
+              onChange={(e) => setOpenReleaseUnix(e.target.value)}
+              style={input}
+              placeholder="e.g. 1796000000"
+            />
+          </label>
+          <button onClick={() => void onVerifyAndOpen()} style={{ ...btnPrimary, marginTop: "1rem" }}>
+            Verify &amp; open
+          </button>
+          {anchorReport.length > 0 && (
+            <ul style={{ fontSize: "0.9rem" }}>
+              {anchorReport.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          )}
+          {openedMessage && (
+            <blockquote
+              style={{
+                borderLeft: "4px solid #16a34a",
+                margin: "1rem 0 0",
+                padding: "0.75rem 1rem",
+                background: "#f0fdf4",
+                borderRadius: "0 10px 10px 0",
+              }}
+            >
+              {openedMessage}
+            </blockquote>
+          )}
+        </section>
+
+        <footer
+          style={{ textAlign: "center", color: "#94a3b8", fontSize: "0.85rem", padding: "2rem 0 1rem" }}
+        >
+          Built for the QoreChain Developer Fest “Build Before Q-Day” · Quantum Pass ·
+          Testnet only — no real funds.
+        </footer>
+      </main>
+    </div>
   );
 }
