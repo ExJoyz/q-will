@@ -11,6 +11,8 @@ the recipient can open it.
 - **Builder testnet address:** `qor1d3schmtf6kaa4ppzt56822rc7rfyhjdfrdwec0`
   (`0x6c618bed69d5bbda84225d34752878f0d24bc9a9`)
 - **Live app:** https://q-will.vercel.app
+- **Demo video:** https://youtu.be/LJa45flMxVU (1:53)
+- **Fest project:** https://build.qorechain.io/p/q-will-quantum-resistant-digital-will
 - **Builder:** Robert Amsterdam — GitHub
   [ExJoyz](https://github.com/ExJoyz) · X
   [@araggoorn](https://x.com/araggoorn)
@@ -128,6 +130,14 @@ your phone with the real QoreX.
    extension (ML-DSA-87) for the key registered at
    `GET /qorechain/pqc/v1/account/<address>`.
 
+**Verified example (21 Nov 2026):** hash
+`A1FA94FEC192E9EF64055B91C42315397BB2DE8BCDECBE02D44056BC0F0FE620`, height
+10445074, code 0, memo
+`QWILL1:8e1e0d430a70af68beb6c66bc6e680121382af976301dd6684187aa42cacbf6c:1795195140`,
+ML-DSA-87 (Dilithium-5), FIPS 204, NIST category 5 —
+[explorer](https://explore.qore.network/tx/A1FA94FEC192E9EF64055B91C42315397BB2DE8BCDECBE02D44056BC0F0FE620?network=testnet)
+(click **Testnet** on the page if it says "not found").
+
 ## QoreSeal spike — honest verdict (20 Nov 2026)
 
 Original plan: encrypt to any qor1 address via the on-chain KEM *registry*,
@@ -183,9 +193,12 @@ npm run spike       # QoreSeal spike (node, no wallet/transaction)
 
 ## Status
 
-Foundation (20 Nov 2026): scaffold + QoreX connection + seal flow + spike done.
-Public repo `ExJoyz/q-will`, deployed at https://q-will.vercel.app.
-UI translated to English (20 Nov 2026) for the international jury.
-No transaction has been sent from this VM yet — the first send is tested from
-a phone with the real QoreX. Remaining: phone seal test, cover image
-1600×900, demo video (≤3 min), project page in My space.
+End-to-end verified (21 Nov 2026) with a real hybrid-signed transaction:
+hash `A1FA94FEC192E9EF64055B91C42315397BB2DE8BCDECBE02D44056BC0F0FE620`,
+height 10445074, code 0, memo matches the envelope hash, ML-DSA-87 verified
+on-chain (FIPS 204, NIST category 5). The "Verify & open" flow was tested
+against that transaction: anchor verified, release date passed, message
+"Inheritance" decrypted in the UI. Demo video (1:53) on YouTube, cover
+1600×900, project registered in My space (Quantum Pass). Public repo
+`ExJoyz/q-will`, deployed at https://q-will.vercel.app. UI in English for
+the international jury.
