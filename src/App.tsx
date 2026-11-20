@@ -40,19 +40,23 @@ const BUILDER_TESTNET_ADDRESS = "qor1d3schmtf6kaa4ppzt56822rc7rfyhjdfrdwec0";
 const page: React.CSSProperties = {
   minHeight: "100vh",
   fontFamily: "system-ui, sans-serif",
-  color: "#0f172a",
+  color: "#e2e8f0",
   background:
-    "radial-gradient(640px 320px at 85% -10%, rgba(99, 102, 241, 0.20), transparent 70%)," +
-    "radial-gradient(520px 280px at 5% 0%, rgba(168, 85, 247, 0.16), transparent 70%)," +
-    "linear-gradient(180deg, #eef2ff 0%, #f8fafc 42%, #fdf4ff 100%)",
+    "radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1.5px)," +
+    "radial-gradient(700px 360px at 85% -10%, rgba(99, 102, 241, 0.28), transparent 70%)," +
+    "radial-gradient(560px 300px at 5% 0%, rgba(168, 85, 247, 0.22), transparent 70%)," +
+    "radial-gradient(500px 420px at 50% 110%, rgba(217, 70, 239, 0.12), transparent 70%)," +
+    "linear-gradient(180deg, #0b0b16 0%, #10101d 45%, #0d0d1a 100%)",
+  backgroundSize: "26px 26px, auto, auto, auto, auto",
 };
 
 const hero: React.CSSProperties = {
-  background: "linear-gradient(135deg, #312e81 0%, #6d28d9 55%, #a21caf 100%)",
+  background: "linear-gradient(135deg, #1e1b4b 0%, #4c1d95 55%, #86198f 100%)",
   color: "#fff",
+  border: "1px solid rgba(255, 255, 255, 0.16)",
   borderRadius: 20,
   padding: "2rem 1.75rem",
-  boxShadow: "0 20px 45px rgba(76, 29, 149, 0.35)",
+  boxShadow: "0 20px 45px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(129, 140, 248, 0.12)",
 };
 
 const badge: React.CSSProperties = {
@@ -67,12 +71,12 @@ const badge: React.CSSProperties = {
 };
 
 const card: React.CSSProperties = {
-  background: "#fff",
-  border: "1px solid #e2e8f0",
+  background: "#171724",
+  border: "1px solid rgba(148, 163, 184, 0.18)",
   borderRadius: 16,
   padding: "1.5rem",
   marginTop: "1.25rem",
-  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.07)",
+  boxShadow: "0 10px 30px rgba(0, 0, 0, 0.45)",
 };
 
 const sectionTitle: React.CSSProperties = {
@@ -87,7 +91,7 @@ const stepBadge: React.CSSProperties = {
   width: 28,
   height: 28,
   borderRadius: "50%",
-  background: "#4f46e5",
+  background: "#6366f1",
   color: "#fff",
   display: "inline-flex",
   alignItems: "center",
@@ -95,6 +99,7 @@ const stepBadge: React.CSSProperties = {
   fontSize: "0.9rem",
   fontWeight: 700,
   flexShrink: 0,
+  boxShadow: "0 0 12px rgba(99, 102, 241, 0.55)",
 };
 
 const input: React.CSSProperties = {
@@ -103,15 +108,15 @@ const input: React.CSSProperties = {
   boxSizing: "border-box",
   fontFamily: "inherit",
   fontSize: "0.95rem",
-  color: "#0f172a",
-  background: "#f8fafc",
-  border: "1px solid #cbd5e1",
+  color: "#e2e8f0",
+  background: "#0f0f1a",
+  border: "1px solid #2e2e45",
   borderRadius: 10,
   marginTop: "0.3rem",
 };
 
 const btnPrimary: React.CSSProperties = {
-  background: "#4f46e5",
+  background: "#6366f1",
   color: "#fff",
   border: "none",
   borderRadius: 10,
@@ -119,12 +124,13 @@ const btnPrimary: React.CSSProperties = {
   fontSize: "0.95rem",
   fontWeight: 600,
   cursor: "pointer",
+  boxShadow: "0 6px 20px rgba(99, 102, 241, 0.45)",
 };
 
 const btnSecondary: React.CSSProperties = {
-  background: "#fff",
-  color: "#4f46e5",
-  border: "1px solid #cbd5e1",
+  background: "transparent",
+  color: "#a5b4fc",
+  border: "1px solid #3f3f5e",
   borderRadius: 10,
   padding: "0.65rem 1.1rem",
   fontSize: "0.95rem",
@@ -143,26 +149,26 @@ const bannerBase: React.CSSProperties = {
 
 const bannerNotice: React.CSSProperties = {
   ...bannerBase,
-  background: "#ecfdf5",
-  border: "1px solid #a7f3d0",
-  color: "#065f46",
+  background: "rgba(16, 185, 129, 0.12)",
+  border: "1px solid rgba(16, 185, 129, 0.35)",
+  color: "#6ee7b7",
 };
 
 const bannerError: React.CSSProperties = {
   ...bannerBase,
-  background: "#fef2f2",
-  border: "1px solid #fecaca",
-  color: "#991b1b",
+  background: "rgba(239, 68, 68, 0.12)",
+  border: "1px solid rgba(239, 68, 68, 0.35)",
+  color: "#fca5a5",
 };
 
 const bannerMock: React.CSSProperties = {
   ...bannerBase,
-  background: "#fffbeb",
-  border: "1px solid #fde68a",
-  color: "#92400e",
+  background: "rgba(245, 158, 11, 0.12)",
+  border: "1px solid rgba(245, 158, 11, 0.35)",
+  color: "#fcd34d",
 };
 
-const muted: React.CSSProperties = { color: "#64748b" };
+const muted: React.CSSProperties = { color: "#94a3b8" };
 
 function short(addr: string): string {
   return addr.length > 20 ? `${addr.slice(0, 12)}…${addr.slice(-8)}` : addr;
@@ -612,11 +618,12 @@ export function App(): JSX.Element {
           {openedMessage && (
             <blockquote
               style={{
-                borderLeft: "4px solid #16a34a",
+                borderLeft: "4px solid #22c55e",
                 margin: "1rem 0 0",
                 padding: "0.75rem 1rem",
-                background: "#f0fdf4",
+                background: "rgba(22, 163, 74, 0.12)",
                 borderRadius: "0 10px 10px 0",
+                color: "#bbf7d0",
               }}
             >
               {openedMessage}
@@ -625,7 +632,7 @@ export function App(): JSX.Element {
         </section>
 
         <footer
-          style={{ textAlign: "center", color: "#94a3b8", fontSize: "0.85rem", padding: "2rem 0 1rem" }}
+          style={{ textAlign: "center", color: "#64748b", fontSize: "0.85rem", padding: "2rem 0 1rem" }}
         >
           Built for the QoreChain Developer Fest “Build Before Q-Day” · Quantum Pass ·
           Testnet only — no real funds.
