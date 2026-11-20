@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-
-import { createClient, type QoreChainClient } from "@qorechain/sdk";
+import { useEffect, useState } from "react";
 
 import {
   buildSealMemo,
   exportKeyCard,
   getOrCreateSealKeys,
   hasLocalSealKeys,
-  hashEnvelopeHex,
+  hashEnvelopeTextHex,
   keyCardToText,
   openWillEnvelope,
   parseKeyCard,
@@ -17,7 +15,6 @@ import {
   QWILL_SEAL_AMOUNT_UQOR,
   type SealedWill,
 } from "./lib/qwill.js";
-import { envelopeFromText } from "@qorechain/qoreseal";
 import {
   connectQorexWallet,
   getPqcStatus,
@@ -54,15 +51,6 @@ function short(addr: string): string {
 }
 
 export function App(): JSX.Element {
-  const client: QoreChainClient = useMemo(
-    () =>
-      createClient({
-        network: "testnet",
-        endpoints: { rest: REST_URL, evmRpc: "https://evm-testnet.qore.host" },
-      }),
-    [],
-  );
-
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -120,6 +108,12 @@ export function App(): JSX.Element {
       const { address: addr } = await connectQorexWallet();
       setAddress(addr);
       setMockMode(isMockQorex());
+      // @qorechain/sdk is heavy: load it only when the user connects.
+      const { createClient } = await import("@qorechain/sdk");
+      const client = createClient({
+        network: "testnet",
+        endpoints: { rest: REST_URL, evmRpc: "https://evm-testnet.qore.host" },
+      });
       const res = await client.rest.getAllBalances(addr);
       const qor = (res.balances as { denom: string; amount: string }[]).find(
         (b) => b.denom === "uqor",
@@ -139,17 +133,21 @@ export function App(): JSX.Element {
     }
   }
 
-  function onShowKeyCard(): void {
+  async function onShowKeyCard(): Promise<void> {
     setError(null);
-    const keys = getOrCreateSealKeys();
-    setKeyCardText(keyCardToText(exportKeyCard(keys, address || undefined)));
-    setNotice(
-      "Kunci segel dibuat/disimpan HANYA di browser ini (localStorage). " +
-        "Bagikan hanya key card di bawah — jangan pernah membagikan seed/fraza.",
-    );
+    try {
+      const keys = await getOrCreateSealKeys();
+      setKeyCardText(keyCardToText(await exportKeyCard(keys, address || undefined)));
+      setNotice(
+        "Kunci segel dibuat/disimpan HANYA di browser ini (localStorage). " +
+          "Bagikan hanya key card di bawah — jangan pernah membagikan seed/fraza.",
+      );
+    } catch (err) {
+      fail(err);
+    }
   }
 
-  function onSeal(): void {
+  async function onSeal(): Promise<void> {
     setError(null);
     setNotice(null);
     setSealed(null);
@@ -167,8 +165,8 @@ export function App(): JSX.Element {
       if (!Number.isFinite(releaseUnix) || releaseUnix <= Date.now() / 1000) {
         throw new Error("Pilih tanggal rilis di masa depan.");
       }
-      const recipientKeys = parseKeyCard(recipientCard);
-      const result = sealWillMessage(message.trim(), recipientKeys);
+      const recipientKeys = await parseKeyCard(recipientCard);
+      const result = await sealWillMessage(message.trim(), recipientKeys);
       setSealed(result);
       setSealMemo(buildSealMemo(result.envelopeHash, releaseUnix));
       setOpenRecipient(recipient.trim());
@@ -238,8 +236,7 @@ export function App(): JSX.Element {
       }
       // The anchor check needs the hash of the envelope BYTES, so decode the
       // pasted text first — never hash the text itself.
-      const decoded = envelopeFromText(openEnvelope.trim());
-      const realHash = hashEnvelopeHex(decoded);
+      const realHash = await hashEnvelopeTextHex(openEnvelope.trim());
       const check = await verifySealAnchor(REST_URL, {
         txHash: openTxHash.trim(),
         envelopeHash: realHash,
@@ -251,8 +248,8 @@ export function App(): JSX.Element {
         setError("Verifikasi segel gagal — lihat laporan di bawah. Pesan TIDAK dibuka.");
         return;
       }
-      const keys = getOrCreateSealKeys();
-      const text = openWillEnvelope(openEnvelope, keys);
+      const keys = await getOrCreateSealKeys();
+      const text = await openWillEnvelope(openEnvelope, keys);
       setOpenedMessage(text);
       setNotice("Segel terverifikasi dan pesan dibuka.");
     } catch (err) {
@@ -325,7 +322,7 @@ export function App(): JSX.Element {
           pernah membagikan seed/fraza pemulihan ke siapa pun — aplikasi ini tidak pernah
           memintanya.
         </p>
-        <button onClick={onShowKeyCard}>Buat / tampilkan key card saya</button>
+        <button onClick={() => void onShowKeyCard()}>Buat / tampilkan key card saya</button>
         {keyCardText && (
           <textarea
             readOnly
@@ -381,7 +378,7 @@ export function App(): JSX.Element {
           />
         </label>
         <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
-          <button onClick={onSeal}>1. Segel pesan (offline)</button>
+          <button onClick={() => void onSeal()}>1. Segel pesan (offline)</button>
           <button onClick={() => void onSendSeal()} disabled={busy || !sealed}>
             2. Kirim segel ke chain (QoreX)
           </button>

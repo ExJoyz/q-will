@@ -17,17 +17,36 @@
 // here — it needs a TxClient with local keys, which a wallet-connected dApp
 // does not have. Use getPqcStatus() only to DISPLAY the status.
 
-import {
-  connectQorex,
-  getQorexNative,
-  hasQorexSignAndBroadcast,
-  isQorexRejection,
-  qorexSignAndBroadcast,
-  type QorexNativeProvider,
-} from "@qorechain/wallet-adapter";
+import type { QorexNativeProvider } from "@qorechain/wallet-adapter";
 // NOTE: same cosmjs-types exports quirk as in qwill.ts — no .js extension.
 import { MsgSend } from "cosmjs-types/cosmos/bank/v1beta1/tx";
 import { Coin } from "cosmjs-types/cosmos/base/v1beta1/coin";
+
+// @qorechain/wallet-adapter is heavy (it pulls in cosmjs). Only the TYPE above
+// is imported statically (erased at compile time). The three tiny checks the
+// UI needs synchronously are inlined here, copied from the adapter's own
+// src/qorex.js: getQorexNative reads window.qorex.native, the capability
+// string is 'signAndBroadcast', and a rejection matches /signature rejected|
+// user rejected|request rejected/i. The real calls (connect, signAndBroadcast)
+// are dynamic-imported inside the async functions that need them, so the
+// adapter loads only when the user connects or sends.
+
+type QorexNativeWindow = typeof globalThis & {
+  window?: { qorex?: { native?: QorexNativeProvider } };
+};
+
+function getQorexNative(): QorexNativeProvider | undefined {
+  return (globalThis as QorexNativeWindow).window?.qorex?.native;
+}
+
+function hasQorexSignAndBroadcast(
+  provider: QorexNativeProvider | undefined,
+): boolean {
+  const capabilities = (
+    provider as unknown as { capabilities?: { includes?: (s: string) => boolean } }
+  )?.capabilities;
+  return Boolean(capabilities?.includes?.("signAndBroadcast"));
+}
 
 import {
   QWILL_CHAIN_ID,
@@ -70,6 +89,8 @@ export async function connectQorexWallet(): Promise<ConnectedWallet> {
       `QoreX ini terlalu lama untuk menandatangani transaksi. Perbarui QoreX (${QOREX_MIN_VERSION_NOTE}).`,
     );
   }
+  // Load the adapter only when the user actually connects.
+  const { connectQorex } = await import("@qorechain/wallet-adapter");
   await connectQorex({ chainId: QWILL_CHAIN_ID, provider });
   // getKey is on the provider per @qorechain/qorex-types (QorexKey shape,
   // Keplr-style), but @qorechain/wallet-adapter types the provider narrower.
@@ -115,6 +136,7 @@ export async function sendSealTx(args: {
     amount: [Coin.fromPartial({ denom: "uqor", amount: QWILL_SEAL_AMOUNT_UQOR })],
   });
   const value = MsgSend.encode(msg).finish();
+  const { qorexSignAndBroadcast } = await import("@qorechain/wallet-adapter");
   const result = await qorexSignAndBroadcast({
     chainId: QWILL_CHAIN_ID,
     messages: [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value }],
@@ -128,7 +150,8 @@ export async function sendSealTx(args: {
 }
 
 export function isUserRejection(err: unknown): boolean {
-  return isQorexRejection(err);
+  const text = typeof err === "string" ? err : ((err as { message?: string })?.message ?? "");
+  return /signature rejected|user rejected|request rejected/i.test(text);
 }
 
 /** Read-only: is this address's ML-DSA-87 key registered on chain? */

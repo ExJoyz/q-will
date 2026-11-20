@@ -73,8 +73,20 @@ npm run dev    # http://localhost:5173
 | `VITE_QORE_EVM_RPC_URL` | EVM JSON-RPC | `https://evm-testnet.qore.host` |
 
 REST publik tidak mengirim header CORS, jadi browser memakai proxy Vite
-(`/lcd`, lihat `vite.config.ts`). Untuk production, serve aplikasi di balik
-proxy yang meneruskan `/lcd` dengan cara yang sama.
+(`/lcd`, lihat `vite.config.ts`). Untuk production, proxy yang sama sudah
+disiapkan sebagai serverless function Vercel (`api/lcd/[...path].js`,
+dipetakan dari `/lcd/*` oleh `vercel.json`).
+
+## Deploy (Vercel)
+
+1. Di dashboard Vercel: **Add New → Project → Import** repo
+   `ExJoyz/q-will`. Framework terdeteksi otomatis (Vite).
+2. Build command `npm run build`, output directory `dist` (sudah di
+   `vercel.json`, tidak perlu diubah).
+3. Deploy. Buka URL hasil deploy di browser dalam aplikasi QoreX (Testnet)
+   dan uji bagian 1–4 seperti di bawah.
+4. Tidak ada environment variable yang wajib diisi: proxy `/lcd` sudah
+   mengarah ke `https://api-testnet.qore.host` di dalam function.
 
 ## Cara menguji dari HP (QoreX asli)
 

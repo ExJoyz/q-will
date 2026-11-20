@@ -4,7 +4,8 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 
 // The public REST API sends no CORS headers, so the browser reaches it through
 // the dev (and preview) server: /lcd/* is forwarded to QORE_REST_PROXY_TARGET.
-// In production, serve the app behind a proxy that does the same, or set
+// In production the same proxy is api/lcd/[...path].js (Vercel serverless
+// function), mapped from /lcd/* by vercel.json. As a fallback, set
 // VITE_QORE_REST_URL to an endpoint that allows your origin.
 //
 // Vite's proxy does not read HTTPS_PROXY on its own. When the environment sets

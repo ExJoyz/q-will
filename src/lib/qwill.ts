@@ -21,23 +21,24 @@
 //      which answers 500 on this testnet — then opens the envelope with the
 //      recipient's local seal keys.
 
-import {
-  envelopeFromText,
-  envelopeToText,
-  fromBase64Url,
-  generateSealKeys,
-  open,
-  recipientOf,
-  seal,
-  sealKeysFromSeed,
-  toBase64Url,
-  type SealKeyPair,
-  type SealRecipient,
+import type {
+  SealKeyPair,
+  SealRecipient,
 } from "@qorechain/qoreseal";
 import { sha3_256 } from "@noble/hashes/sha3.js";
 // NOTE: cosmjs-types 0.11 exports "./*.js": null, so subpaths are imported
 // WITHOUT the .js extension (its "./*" mapping resolves them).
 import { MsgSend } from "cosmjs-types/cosmos/bank/v1beta1/tx";
+
+// @qorechain/qoreseal is heavy (ML-KEM-1024). It is loaded on demand, so the
+// first paint stays light; every seal/open flow awaits it when the user acts.
+// Type-only imports above are erased at compile time and cost nothing.
+type QoreSealModule = typeof import("@qorechain/qoreseal");
+let qoresealPromise: Promise<QoreSealModule> | null = null;
+function loadQoreSeal(): Promise<QoreSealModule> {
+  if (!qoresealPromise) qoresealPromise = import("@qorechain/qoreseal");
+  return qoresealPromise;
+}
 
 export const QWILL_CHAIN_ID = "qorechain-diana";
 export const QWILL_PURPOSE = "q-will";
@@ -87,7 +88,8 @@ export function parseSealMemo(memo: string): ParsedSealMemo | null {
 // demo-grade keystore: production would use wallet-native decryption (which
 // QoreX does not expose to dApps today — see README "Spike QoreSeal").
 
-export function getOrCreateSealKeys(): SealKeyPair {
+export async function getOrCreateSealKeys(): Promise<SealKeyPair> {
+  const qs = await loadQoreSeal();
   let stored: string | null = null;
   try {
     stored = window.localStorage.getItem(QWILL_SEED_STORAGE_KEY);
@@ -96,14 +98,14 @@ export function getOrCreateSealKeys(): SealKeyPair {
   }
   if (stored) {
     try {
-      return sealKeysFromSeed(fromBase64Url(stored));
+      return qs.sealKeysFromSeed(qs.fromBase64Url(stored));
     } catch {
       // Corrupt entry: fall through and generate fresh keys.
     }
   }
-  const keys = generateSealKeys();
+  const keys = qs.generateSealKeys();
   try {
-    window.localStorage.setItem(QWILL_SEED_STORAGE_KEY, toBase64Url(keys.seed));
+    window.localStorage.setItem(QWILL_SEED_STORAGE_KEY, qs.toBase64Url(keys.seed));
   } catch {
     // Storage unavailable (private mode etc.) — keys live only for this page.
   }
@@ -128,13 +130,14 @@ export interface KeyCard {
   x25519PublicKey: string; // base64url, 32 bytes
 }
 
-export function exportKeyCard(keys: SealKeyPair, address?: string): KeyCard {
+export async function exportKeyCard(keys: SealKeyPair, address?: string): Promise<KeyCard> {
+  const qs = await loadQoreSeal();
   return {
     v: 1,
     kind: "qwill-key-card",
     ...(address ? { address } : {}),
-    mlkemPublicKey: toBase64Url(keys.mlkemPublicKey),
-    x25519PublicKey: toBase64Url(keys.x25519PublicKey),
+    mlkemPublicKey: qs.toBase64Url(keys.mlkemPublicKey),
+    x25519PublicKey: qs.toBase64Url(keys.x25519PublicKey),
   };
 }
 
@@ -142,14 +145,15 @@ export function keyCardToText(card: KeyCard): string {
   return JSON.stringify(card);
 }
 
-export function parseKeyCard(text: string): SealRecipient {
+export async function parseKeyCard(text: string): Promise<SealRecipient> {
+  const qs = await loadQoreSeal();
   let raw: unknown;
   try {
     raw = JSON.parse(text.trim());
   } catch {
     // Accept base64url-encoded JSON as well (compact share form).
     try {
-      raw = JSON.parse(new TextDecoder().decode(fromBase64Url(text.trim())));
+      raw = JSON.parse(new TextDecoder().decode(qs.fromBase64Url(text.trim())));
     } catch {
       throw new Error("Key card tidak bisa dibaca: bukan JSON key card Q-Will.");
     }
@@ -159,8 +163,8 @@ export function parseKeyCard(text: string): SealRecipient {
     throw new Error("Key card tidak valid: bukan key card Q-Will.");
   }
   const recipient: SealRecipient = {
-    mlkemPublicKey: fromBase64Url(card.mlkemPublicKey),
-    x25519PublicKey: fromBase64Url(card.x25519PublicKey),
+    mlkemPublicKey: qs.fromBase64Url(card.mlkemPublicKey),
+    x25519PublicKey: qs.fromBase64Url(card.x25519PublicKey),
   };
   if (recipient.mlkemPublicKey.length !== 1568) {
     throw new Error("Key card tidak valid: kunci ML-KEM harus 1568 byte.");
@@ -179,16 +183,20 @@ export interface SealedWill {
   envelopeHash: string; // sha3-256 hex, anchored on-chain
 }
 
-export function sealWillMessage(plaintext: string, recipient: SealRecipient): SealedWill {
+export async function sealWillMessage(
+  plaintext: string,
+  recipient: SealRecipient,
+): Promise<SealedWill> {
+  const qs = await loadQoreSeal();
   // Hybrid mode needs BOTH keys; a card without X25519 cannot be sealed to.
   if (!recipient.x25519PublicKey) {
     throw new Error("Key card penerima tidak punya kunci X25519 (mode hybrid butuh keduanya).");
   }
-  const envelope = seal({
+  const envelope = qs.seal({
     chainId: QWILL_CHAIN_ID,
     purpose: QWILL_PURPOSE,
     recipients: [
-      recipientOf({
+      qs.recipientOf({
         mlkemPublicKey: recipient.mlkemPublicKey,
         x25519PublicKey: recipient.x25519PublicKey,
       }),
@@ -197,20 +205,27 @@ export function sealWillMessage(plaintext: string, recipient: SealRecipient): Se
   });
   return {
     envelope,
-    envelopeText: envelopeToText(envelope),
+    envelopeText: qs.envelopeToText(envelope),
     envelopeHash: hashEnvelopeHex(envelope),
   };
 }
 
-export function openWillEnvelope(envelopeText: string, keys: SealKeyPair): string {
-  const envelope = envelopeFromText(envelopeText.trim());
-  const plaintext = open({
+export async function openWillEnvelope(envelopeText: string, keys: SealKeyPair): Promise<string> {
+  const qs = await loadQoreSeal();
+  const envelope = qs.envelopeFromText(envelopeText.trim());
+  const plaintext = qs.open({
     chainId: QWILL_CHAIN_ID,
     purpose: QWILL_PURPOSE,
     envelope,
     keys,
   });
   return new TextDecoder().decode(plaintext);
+}
+
+/** Decode envelope text and return its SHA3-256 hash hex (for anchor checks). */
+export async function hashEnvelopeTextHex(envelopeText: string): Promise<string> {
+  const qs = await loadQoreSeal();
+  return hashEnvelopeHex(qs.envelopeFromText(envelopeText.trim()));
 }
 
 // ─── Anchor verification (tx by hash — never the tx-history list) ───────────
