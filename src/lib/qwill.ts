@@ -155,22 +155,22 @@ export async function parseKeyCard(text: string): Promise<SealRecipient> {
     try {
       raw = JSON.parse(new TextDecoder().decode(qs.fromBase64Url(text.trim())));
     } catch {
-      throw new Error("Key card tidak bisa dibaca: bukan JSON key card Q-Will.");
+      throw new Error("Key card unreadable: not a Q-Will key card JSON.");
     }
   }
   const card = raw as Partial<KeyCard>;
   if (card.kind !== "qwill-key-card" || !card.mlkemPublicKey || !card.x25519PublicKey) {
-    throw new Error("Key card tidak valid: bukan key card Q-Will.");
+    throw new Error("Invalid key card: not a Q-Will key card.");
   }
   const recipient: SealRecipient = {
     mlkemPublicKey: qs.fromBase64Url(card.mlkemPublicKey),
     x25519PublicKey: qs.fromBase64Url(card.x25519PublicKey),
   };
   if (recipient.mlkemPublicKey.length !== 1568) {
-    throw new Error("Key card tidak valid: kunci ML-KEM harus 1568 byte.");
+    throw new Error("Invalid key card: ML-KEM key must be 1568 bytes.");
   }
   if (recipient.x25519PublicKey?.length !== 32) {
-    throw new Error("Key card tidak valid: kunci X25519 harus 32 byte.");
+    throw new Error("Invalid key card: X25519 key must be 32 bytes.");
   }
   return recipient;
 }
@@ -190,7 +190,7 @@ export async function sealWillMessage(
   const qs = await loadQoreSeal();
   // Hybrid mode needs BOTH keys; a card without X25519 cannot be sealed to.
   if (!recipient.x25519PublicKey) {
-    throw new Error("Key card penerima tidak punya kunci X25519 (mode hybrid butuh keduanya).");
+    throw new Error("Recipient key card has no X25519 key (hybrid mode needs both).");
   }
   const envelope = qs.seal({
     chainId: QWILL_CHAIN_ID,
@@ -272,66 +272,66 @@ export async function verifySealAnchor(
   try {
     res = await fetch(`${rest.replace(/\/$/, "")}/cosmos/tx/v1beta1/txs/${args.txHash}`);
   } catch (err) {
-    reasons.push(`Tidak bisa membaca transaksi: ${err instanceof Error ? err.message : String(err)}`);
+    reasons.push(`Could not read the transaction: ${err instanceof Error ? err.message : String(err)}`);
     return base;
   }
   if (res.status === 404) {
-    reasons.push("Transaksi tidak ditemukan di chain (hash salah / belum masuk?).");
+    reasons.push("Transaction not found on-chain (wrong hash / not included yet?).");
     return base;
   }
   if (!res.ok) {
-    reasons.push(`Chain menjawab HTTP ${res.status} saat membaca transaksi.`);
+    reasons.push(`Chain answered HTTP ${res.status} while reading the transaction.`);
     return base;
   }
   const data = (await res.json()) as RestTxResponse;
   const code = Number(data.tx_response?.code ?? -1);
   if (code !== 0) {
-    reasons.push(`Transaksi gagal di chain (code ${data.tx_response?.code}).`);
+    reasons.push(`Transaction failed on-chain (code ${data.tx_response?.code}).`);
     return base;
   }
   const memo = data.tx?.body?.memo ?? null;
   base.memo = memo;
   if (!memo) {
-    reasons.push("Transaksi tidak punya memo segel.");
+    reasons.push("Transaction has no seal memo.");
     return base;
   }
   const parsed = parseSealMemo(memo);
   if (!parsed) {
-    reasons.push("Memo transaksi bukan segel Q-Will.");
+    reasons.push("Transaction memo is not a Q-Will seal.");
     return base;
   }
   base.releaseUnix = parsed.releaseUnix;
   if (parsed.envelopeHash !== args.envelopeHash) {
-    reasons.push("Hash amplop di memo TIDAK cocok dengan amplop ini.");
+    reasons.push("Envelope hash in the memo does NOT match this envelope.");
     return base;
   }
   if (parsed.releaseUnix !== args.releaseUnix) {
-    reasons.push("Tanggal rilis di memo berbeda dengan yang diminta.");
+    reasons.push("Release date in the memo differs from the requested one.");
     return base;
   }
   const messages = data.tx?.body?.messages ?? [];
   const send = messages.find((m) => m.type_url === "/cosmos.bank.v1beta1.MsgSend");
   if (!send?.value) {
-    reasons.push("Transaksi bukan bank send segel.");
+    reasons.push("Transaction is not a seal bank send.");
     return base;
   }
   try {
     const decoded = MsgSend.decode(Uint8Array.from(atob(send.value), (c) => c.charCodeAt(0)));
     if (decoded.toAddress !== args.recipient) {
-      reasons.push(`Penerima di transaksi (${decoded.toAddress}) bukan ${args.recipient}.`);
+      reasons.push(`Recipient in the transaction (${decoded.toAddress}) is not ${args.recipient}.`);
       return base;
     }
   } catch {
-    reasons.push("Pesan bank send tidak bisa di-decode.");
+    reasons.push("Bank send message could not be decoded.");
     return base;
   }
   if (!base.released) {
     reasons.push(
-      `Segel valid, tapi tanggal rilis belum tiba (${new Date(args.releaseUnix * 1000).toISOString()}).`,
+      `Seal is valid, but the release date has not arrived yet (${new Date(args.releaseUnix * 1000).toISOString()}).`,
     );
     return base;
   }
   base.ok = true;
-  reasons.push("Segel terverifikasi di chain: hash cocok, penerima cocok, tanggal rilis lewat.");
+  reasons.push("Seal verified on-chain: hash matches, recipient matches, release date passed.");
   return base;
 }

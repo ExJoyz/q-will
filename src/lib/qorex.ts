@@ -54,7 +54,7 @@ import {
   QWILL_SEAL_GAS_LIMIT,
 } from "./qwill.js";
 
-export const QOREX_MIN_VERSION_NOTE = "QoreX extension >= 0.3.5 atau aplikasi >= 1.1.5.";
+export const QOREX_MIN_VERSION_NOTE = "QoreX extension >= 0.3.5 or app >= 1.1.5.";
 
 export function isQorexAvailable(): boolean {
   return getQorexNative() !== undefined;
@@ -81,12 +81,12 @@ export async function connectQorexWallet(): Promise<ConnectedWallet> {
   const provider = getQorexNative();
   if (!provider) {
     throw new Error(
-      "QoreX tidak ditemukan di browser ini. Pasang ekstensi QoreX, atau buka halaman ini di browser dalam aplikasi QoreX.",
+      "QoreX was not found in this browser. Install the QoreX extension, or open this page in the QoreX in-app browser.",
     );
   }
   if (!hasQorexSignAndBroadcast(provider)) {
     throw new Error(
-      `QoreX ini terlalu lama untuk menandatangani transaksi. Perbarui QoreX (${QOREX_MIN_VERSION_NOTE}).`,
+      `This QoreX is too old to sign transactions. Update QoreX (${QOREX_MIN_VERSION_NOTE}).`,
     );
   }
   // Load the adapter only when the user actually connects.
@@ -100,7 +100,7 @@ export async function connectQorexWallet(): Promise<ConnectedWallet> {
     }
   ).getKey(QWILL_CHAIN_ID);
   if (!key?.bech32Address) {
-    throw new Error("QoreX terhubung tapi tidak memberikan alamat akun.");
+    throw new Error("QoreX connected but did not provide an account address.");
   }
   return { provider, address: key.bech32Address };
 }
@@ -126,8 +126,8 @@ export async function sendSealTx(args: {
 }): Promise<SealTxResult> {
   if (isMockQorex()) {
     throw new Error(
-      "Mode mock QoreX: pengiriman transaksi DINONAKTIFKAN di VM ini. " +
-        "Uji pengiriman segel dari HP dengan QoreX asli — lihat README 'Cara menguji dari HP'.",
+      "Mock QoreX mode: sending transactions is DISABLED on this VM. " +
+        "Test sending a seal from your phone with the real QoreX — see README 'Testing from your phone'.",
     );
   }
   const msg = MsgSend.fromPartial({
@@ -144,7 +144,7 @@ export async function sendSealTx(args: {
     gasLimit: QWILL_SEAL_GAS_LIMIT,
   });
   if (result.code !== 0) {
-    throw new Error(`Transaksi segel ditolak chain (code ${result.code}).`);
+    throw new Error(`Seal transaction rejected on-chain (code ${result.code}).`);
   }
   return { txHash: result.txHash, code: result.code, height: result.height };
 }

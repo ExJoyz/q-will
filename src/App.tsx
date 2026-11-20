@@ -123,8 +123,8 @@ export function App(): JSX.Element {
       setPqcRegistered(pqc.found);
       setNotice(
         pqc.found
-          ? "QoreX terhubung. Kunci ML-DSA-87 akun ini sudah terdaftar."
-          : "QoreX terhubung. Kunci ML-DSA-87 belum terdaftar — QoreX akan mendaftarkannya otomatis di transaksi pertamamu.",
+          ? "QoreX connected. This account's ML-DSA-87 key is registered."
+          : "QoreX connected. The ML-DSA-87 key is not registered yet — QoreX will register it automatically on your first transaction.",
       );
     } catch (err) {
       fail(err);
@@ -139,8 +139,8 @@ export function App(): JSX.Element {
       const keys = await getOrCreateSealKeys();
       setKeyCardText(keyCardToText(await exportKeyCard(keys, address || undefined)));
       setNotice(
-        "Kunci segel dibuat/disimpan HANYA di browser ini (localStorage). " +
-          "Bagikan hanya key card di bawah — jangan pernah membagikan seed/fraza.",
+        "Seal keys are created/stored ONLY in this browser (localStorage). " +
+          "Share only the key card below — never share your seed/recovery phrase.",
       );
     } catch (err) {
       fail(err);
@@ -154,16 +154,16 @@ export function App(): JSX.Element {
     setSealMemo("");
     setTxHash("");
     try {
-      if (!message.trim()) throw new Error("Tulis dulu pesan terakhirnya.");
+      if (!message.trim()) throw new Error("Write your final message first.");
       if (!recipient.trim().startsWith("qor1")) {
-        throw new Error("Alamat penerima harus qor1… (testnet).");
+        throw new Error("The recipient address must be qor1… (testnet).");
       }
       if (!recipientCard.trim()) {
-        throw new Error("Tempel key card penerima (didapat dari bagian 2 di browser penerima).");
+        throw new Error("Paste the recipient's key card (from section 2 in the recipient's browser).");
       }
       const releaseUnix = Math.floor(new Date(releaseDate).getTime() / 1000);
       if (!Number.isFinite(releaseUnix) || releaseUnix <= Date.now() / 1000) {
-        throw new Error("Pilih tanggal rilis di masa depan.");
+        throw new Error("Pick a release date in the future.");
       }
       const recipientKeys = await parseKeyCard(recipientCard);
       const result = await sealWillMessage(message.trim(), recipientKeys);
@@ -173,8 +173,8 @@ export function App(): JSX.Element {
       setOpenReleaseUnix(String(releaseUnix));
       setOpenEnvelope(result.envelopeText);
       setNotice(
-        "Pesan tersegel (offline, ML-KEM-1024 + X25519). " +
-          "Langkah berikut: kirim segel ke chain agar hash-nya tercatat.",
+        "Message sealed (offline, ML-KEM-1024 + X25519). " +
+          "Next step: send the seal on-chain so its hash is recorded.",
       );
     } catch (err) {
       fail(err);
@@ -185,11 +185,11 @@ export function App(): JSX.Element {
     setError(null);
     setNotice(null);
     if (!sealed || !sealMemo) {
-      setError("Segel dulu pesannya (langkah 1).");
+      setError("Seal the message first (step 1).");
       return;
     }
     if (!address) {
-      setError("Hubungkan QoreX dulu (bagian 1).");
+      setError("Connect QoreX first (section 1).");
       return;
     }
     setBusy(true);
@@ -198,12 +198,12 @@ export function App(): JSX.Element {
       setTxHash(res.txHash);
       setOpenTxHash(res.txHash);
       setNotice(
-        `Segel terkirim! Tx ${res.txHash} (code ${res.code}). ` +
-          "Bagikan tautan buka di bawah kepada penerima.",
+        `Seal sent! Tx ${res.txHash} (code ${res.code}). ` +
+          "Share the open link below with the recipient.",
       );
     } catch (err) {
       if (isUserRejection(err)) {
-        setError("Kamu membatalkan persetujuan di QoreX. Segel belum terkirim.");
+        setError("You cancelled the approval in QoreX. The seal was not sent.");
       } else {
         fail(err);
       }
@@ -225,14 +225,14 @@ export function App(): JSX.Element {
     setOpenedMessage("");
     setAnchorReport([]);
     try {
-      if (!openEnvelope.trim()) throw new Error("Tempel amplop (teks qoreseal:…) dulu.");
-      if (!openTxHash.trim()) throw new Error("Masukkan hash transaksi segel.");
+      if (!openEnvelope.trim()) throw new Error("Paste the envelope (qoreseal:… text) first.");
+      if (!openTxHash.trim()) throw new Error("Enter the seal transaction hash.");
       if (!openRecipient.trim().startsWith("qor1")) {
-        throw new Error("Alamat penerima harus qor1… .");
+        throw new Error("The recipient address must be qor1… .");
       }
       const releaseUnix = Number(openReleaseUnix);
       if (!Number.isInteger(releaseUnix) || releaseUnix <= 0) {
-        throw new Error("Tanggal rilis (unix) tidak valid.");
+        throw new Error("Invalid release date (unix).");
       }
       // The anchor check needs the hash of the envelope BYTES, so decode the
       // pasted text first — never hash the text itself.
@@ -245,13 +245,13 @@ export function App(): JSX.Element {
       });
       setAnchorReport(check.reasons);
       if (!check.ok) {
-        setError("Verifikasi segel gagal — lihat laporan di bawah. Pesan TIDAK dibuka.");
+        setError("Seal verification failed — see the report below. The message was NOT opened.");
         return;
       }
       const keys = await getOrCreateSealKeys();
       const text = await openWillEnvelope(openEnvelope, keys);
       setOpenedMessage(text);
-      setNotice("Segel terverifikasi dan pesan dibuka.");
+      setNotice("Seal verified and message opened.");
     } catch (err) {
       fail(err);
     }
@@ -267,20 +267,20 @@ export function App(): JSX.Element {
         lineHeight: 1.5,
       }}
     >
-      <h1>Q-Will — Surat Wasiat Digital Tahan Kuantum</h1>
+      <h1>Q-Will — Quantum-Resistant Digital Will</h1>
       <p style={{ color: "#555" }}>
-        Tulis pesan terakhir, segel dengan QoreSeal (ML-KEM-1024), dan catat segelnya di
-        QoreChain testnet ({QWILL_CHAIN_ID}) lewat SATU transaksi hybrid-signed. Penerima
-        membukanya setelah tanggal rilis — dan hanya penerima yang bisa membukanya.
+        Write a final message, seal it with QoreSeal (ML-KEM-1024), and anchor the seal on the
+        QoreChain testnet ({QWILL_CHAIN_ID}) with ONE hybrid-signed transaction. The recipient
+        opens it after the release date — and only the recipient can open it.
       </p>
       <p style={{ color: "#555", fontSize: "0.9rem" }}>
-        Jaringan: testnet · Pembuat (alamat testnet):{" "}
+        Network: testnet · Builder (testnet address):{" "}
         <code>{short(BUILDER_TESTNET_ADDRESS)}</code>
       </p>
       {mockMode && (
         <p style={{ color: "#8a6d00", background: "#fff8d6", padding: "0.5rem" }}>
-          Mode mock QoreX (dev): koneksi bisa diuji, tapi pengiriman transaksi
-          dinonaktifkan di VM ini.
+          Mock QoreX mode (dev): the connection can be tested, but sending transactions
+          is disabled on this VM.
         </p>
       )}
       {notice && <p style={{ color: "#0a7a2f" }}>{notice}</p>}
@@ -291,66 +291,66 @@ export function App(): JSX.Element {
       )}
 
       <section style={box}>
-        <h2>1. Hubungkan QoreX</h2>
+        <h2>1. Connect QoreX</h2>
         <p>
           {address ? (
             <>
-              Terhubung: <code>{short(address)}</code> · Saldo: {balance ?? "…"} · Kunci
-              ML-DSA-87:{" "}
-              {pqcRegistered === null ? "…" : pqcRegistered ? "terdaftar" : "belum terdaftar"}
+              Connected: <code>{short(address)}</code> · Balance: {balance ?? "…"} · ML-DSA-87
+              key:{" "}
+              {pqcRegistered === null ? "…" : pqcRegistered ? "registered" : "not registered"}
             </>
           ) : (
-            "Belum terhubung. Buka halaman ini di browser dalam aplikasi QoreX, atau pakai ekstensi QoreX (Testnet)."
+            "Not connected yet. Open this page in the QoreX in-app browser, or use the QoreX extension (Testnet)."
           )}
         </p>
         <button onClick={() => void onConnect()} disabled={busy}>
-          {address ? "Hubungkan ulang" : "Hubungkan QoreX"}
+          {address ? "Reconnect" : "Connect QoreX"}
         </button>
         {!isQorexAvailable() && !mockMode && (
           <p style={{ color: "#555", fontSize: "0.9rem" }}>
-            QoreX tidak terdeteksi di browser ini. Di desktop tanpa ekstensi, jalankan dev
-            dengan <code>?mock-qorex=1</code> untuk menguji tampilan koneksi (mock).
+            QoreX was not detected in this browser. On desktop without the extension, run dev
+            with <code>?mock-qorex=1</code> to test the connection UI (mock).
           </p>
         )}
       </section>
 
       <section style={box}>
-        <h2>2. Kunci segel saya (untuk penerima)</h2>
+        <h2>2. My seal keys (for recipients)</h2>
         <p style={{ fontSize: "0.9rem", color: "#555" }}>
-          Kunci segel dibuat dan disimpan HANYA di browser ini (localStorage). Pihak lain
-          hanya butuh key card (kunci publik) untuk mengirimi kamu pesan tersegel. Jangan
-          pernah membagikan seed/fraza pemulihan ke siapa pun — aplikasi ini tidak pernah
-          memintanya.
+          Seal keys are created and stored ONLY in this browser (localStorage). Others
+          only need the key card (public key) to send you a sealed message. Never
+          share your seed/recovery phrase with anyone — this app never
+          asks for it.
         </p>
-        <button onClick={() => void onShowKeyCard()}>Buat / tampilkan key card saya</button>
+        <button onClick={() => void onShowKeyCard()}>Create / show my key card</button>
         {keyCardText && (
           <textarea
             readOnly
             value={keyCardText}
             rows={4}
             style={{ ...input, marginTop: "0.5rem" }}
-            aria-label="Key card saya"
+            aria-label="My key card"
           />
         )}
         {hasLocalSealKeys() && !keyCardText && (
-          <p style={{ fontSize: "0.9rem" }}>Browser ini sudah punya kunci segel.</p>
+          <p style={{ fontSize: "0.9rem" }}>This browser already has seal keys.</p>
         )}
       </section>
 
       <section style={box}>
-        <h2>3. Buat surat wasiat</h2>
+        <h2>3. Create a will</h2>
         <label>
-          Pesan terakhir
+          Final message
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
             style={input}
-            placeholder="Tulis pesan untuk penerima…"
+            placeholder="Write a message for the recipient…"
           />
         </label>
         <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Alamat penerima (qor1…)
+          Recipient address (qor1…)
           <input
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
@@ -359,7 +359,7 @@ export function App(): JSX.Element {
           />
         </label>
         <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Key card penerima (dari bagian 2 di browser penerima)
+          Recipient key card (from section 2 in the recipient's browser)
           <textarea
             value={recipientCard}
             onChange={(e) => setRecipientCard(e.target.value)}
@@ -369,7 +369,7 @@ export function App(): JSX.Element {
           />
         </label>
         <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Tanggal rilis
+          Release date
           <input
             type="datetime-local"
             value={releaseDate}
@@ -378,30 +378,30 @@ export function App(): JSX.Element {
           />
         </label>
         <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
-          <button onClick={() => void onSeal()}>1. Segel pesan (offline)</button>
+          <button onClick={() => void onSeal()}>1. Seal message (offline)</button>
           <button onClick={() => void onSendSeal()} disabled={busy || !sealed}>
-            2. Kirim segel ke chain (QoreX)
+            2. Send seal on-chain (QoreX)
           </button>
         </div>
         {sealed && (
           <div style={{ marginTop: "0.75rem", fontSize: "0.9rem" }}>
             <p>
-              Amplop: {sealed.envelope.length} byte · hash:{" "}
+              Envelope: {sealed.envelope.length} bytes · hash:{" "}
               <code>{sealed.envelopeHash.slice(0, 16)}…</code>
             </p>
             <p>
-              Memo segel ({sealMemo.length} byte, maks 256): <code>{sealMemo}</code>
+              Seal memo ({sealMemo.length} bytes, max 256): <code>{sealMemo}</code>
             </p>
             <p>
-              Nilai kirim: {Number(QWILL_SEAL_AMOUNT_UQOR) / 1_000_000} QOR (simbolis).
+              Send value: {Number(QWILL_SEAL_AMOUNT_UQOR) / 1_000_000} QOR (symbolic).
             </p>
             {txHash && (
               <>
                 <p>
-                  Tx segel: <code>{txHash}</code>
+                  Seal tx: <code>{txHash}</code>
                 </p>
                 <p>
-                  Tautan buka untuk penerima:
+                  Open link for the recipient:
                   <br />
                   <code style={{ wordBreak: "break-all" }}>{shareLink()}</code>
                 </p>
@@ -412,14 +412,14 @@ export function App(): JSX.Element {
       </section>
 
       <section style={box}>
-        <h2>4. Buka surat (penerima)</h2>
+        <h2>4. Open a will (recipient)</h2>
         <p style={{ fontSize: "0.9rem", color: "#555" }}>
-          Tempel amplop dari tautan, masukkan hash transaksi segel, lalu verifikasi. Pesan
-          hanya terbuka bila segel terverifikasi di chain DAN tanggal rilis sudah lewat
-          DAN browser ini memegang kunci segel penerima.
+          Paste the envelope from the link, enter the seal transaction hash, then verify. The message
+          only opens when the seal is verified on-chain AND the release date has passed
+          AND this browser holds the recipient's seal keys.
         </p>
         <label>
-          Amplop (teks qoreseal:…)
+          Envelope (qoreseal:… text)
           <textarea
             value={openEnvelope}
             onChange={(e) => setOpenEnvelope(e.target.value)}
@@ -429,7 +429,7 @@ export function App(): JSX.Element {
           />
         </label>
         <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Hash transaksi segel
+          Seal transaction hash
           <input
             value={openTxHash}
             onChange={(e) => setOpenTxHash(e.target.value)}
@@ -438,7 +438,7 @@ export function App(): JSX.Element {
           />
         </label>
         <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Alamat penerima (qor1…)
+          Recipient address (qor1…)
           <input
             value={openRecipient}
             onChange={(e) => setOpenRecipient(e.target.value)}
@@ -447,16 +447,16 @@ export function App(): JSX.Element {
           />
         </label>
         <label style={{ display: "block", marginTop: "0.5rem" }}>
-          Tanggal rilis (unix detik)
+          Release date (unix seconds)
           <input
             value={openReleaseUnix}
             onChange={(e) => setOpenReleaseUnix(e.target.value)}
             style={input}
-            placeholder="mis. 1796000000"
+            placeholder="e.g. 1796000000"
           />
         </label>
         <button onClick={() => void onVerifyAndOpen()} style={{ marginTop: "0.75rem" }}>
-          Verifikasi &amp; buka
+          Verify &amp; open
         </button>
         {anchorReport.length > 0 && (
           <ul style={{ fontSize: "0.9rem" }}>
