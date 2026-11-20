@@ -76,8 +76,11 @@ npm run dev    # http://localhost:5173
 
 The public REST sends no CORS headers, so the browser uses the Vite proxy
 (`/lcd`, see `vite.config.ts`). For production, the same proxy is provided as
-a Vercel serverless function (`api/lcd/[...path].js`, mapped from `/lcd/*` by
-`vercel.json`).
+a Vercel serverless function (`api/lcd.js`, reached from `/lcd/*` by the
+`vercel.json` rewrite as `/api/lcd?path=/...`). Note: the first version used
+a catch-all file `api/lcd/[...path].js`, but Vercel only matched one path
+segment for it, so the proxy now reads the REST path from the `path` query
+parameter instead.
 
 ## Deploy (Vercel)
 
