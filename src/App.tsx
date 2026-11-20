@@ -351,6 +351,15 @@ export function App(): JSX.Element {
     try {
       if (!openEnvelope.trim()) throw new Error("Paste the envelope (qoreseal:… text) first.");
       if (!openTxHash.trim()) throw new Error("Enter the seal transaction hash.");
+      // The chain answers HTTP 500 for any hash that is not exactly 64 hex
+      // characters (odd length / non-hex), so validate locally first with a
+      // message the user can act on instead of a bare 500.
+      const txHashClean = openTxHash.trim().toLowerCase();
+      if (!/^[0-9a-f]{64}$/.test(txHashClean)) {
+        throw new Error(
+          `Seal transaction hash must be exactly 64 hex characters (0-9, a-f). Yours has ${txHashClean.length} characters — copy the full Tx hash from section 3 after sending the seal.`,
+        );
+      }
       if (!openRecipient.trim().startsWith("qor1")) {
         throw new Error("The recipient address must be qor1… .");
       }
@@ -361,8 +370,15 @@ export function App(): JSX.Element {
       // The anchor check needs the hash of the envelope BYTES, so decode the
       // pasted text first — never hash the text itself.
       const realHash = await hashEnvelopeTextHex(openEnvelope.trim());
+      // The envelope hash (the middle part of the seal memo) is NOT a
+      // transaction hash — catch that mix-up before asking the chain.
+      if (txHashClean === realHash) {
+        throw new Error(
+          "That hash is the envelope hash from the seal memo, not a transaction hash. Send the seal on-chain first (step 2 in section 3), then paste the Tx hash shown there.",
+        );
+      }
       const check = await verifySealAnchor(REST_URL, {
-        txHash: openTxHash.trim(),
+        txHash: txHashClean,
         envelopeHash: realHash,
         recipient: openRecipient.trim(),
         releaseUnix,
@@ -538,7 +554,8 @@ export function App(): JSX.Element {
                 <code>{sealed.envelopeHash.slice(0, 16)}…</code>
               </p>
               <p>
-                Seal memo ({sealMemo.length} bytes, max 256): <code>{sealMemo}</code>
+                Seal memo ({sealMemo.length} bytes, max 256):{" "}
+                <code style={{ wordBreak: "break-all" }}>{sealMemo}</code>
               </p>
               <p>
                 Send value: {Number(QWILL_SEAL_AMOUNT_UQOR) / 1_000_000} QOR (symbolic).
@@ -546,7 +563,8 @@ export function App(): JSX.Element {
               {txHash && (
                 <>
                   <p>
-                    Seal tx: <code>{txHash}</code>
+                    Seal tx:{" "}
+                    <code style={{ wordBreak: "break-all" }}>{txHash}</code>
                   </p>
                   <p>
                     Open link for the recipient:

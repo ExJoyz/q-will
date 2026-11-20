@@ -280,7 +280,16 @@ export async function verifySealAnchor(
     return base;
   }
   if (!res.ok) {
-    reasons.push(`Chain answered HTTP ${res.status} while reading the transaction.`);
+    if (res.status === 500) {
+      // The chain answers 500 (not 404) for a hash that is not exactly 64
+      // hex characters — odd length gives "odd length hex string", non-hex
+      // gives "invalid byte". Verified live 20 Nov 2026.
+      reasons.push(
+        "Chain answered HTTP 500 — the transaction hash is probably incomplete or mistyped (the chain only accepts exactly 64 hex characters). Copy the full Tx hash from section 3.",
+      );
+    } else {
+      reasons.push(`Chain answered HTTP ${res.status} while reading the transaction.`);
+    }
     return base;
   }
   const data = (await res.json()) as RestTxResponse;
