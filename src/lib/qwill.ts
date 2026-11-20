@@ -243,7 +243,17 @@ interface RestTxResponse {
   tx?: {
     body?: {
       memo?: string;
-      messages?: { type_url?: string; value?: string }[];
+      // The chain's REST returns messages in the JSON-decoded (Amino) shape:
+      // "@type" + plain fields (to_address/from_address/amount). Older docs
+      // show the protobuf Any shape (type_url + base64 value) — accept both.
+      messages?: {
+        type_url?: string;
+        value?: string;
+        "@type"?: string;
+        to_address?: string;
+        from_address?: string;
+        amount?: { denom?: string; amount?: string }[];
+      }[];
     };
   };
   tx_response?: { code?: number | string; height?: string };
@@ -319,19 +329,35 @@ export async function verifySealAnchor(
     return base;
   }
   const messages = data.tx?.body?.messages ?? [];
-  const send = messages.find((m) => m.type_url === "/cosmos.bank.v1beta1.MsgSend");
-  if (!send?.value) {
+  const send = messages.find(
+    (m) =>
+      m.type_url === "/cosmos.bank.v1beta1.MsgSend" ||
+      m["@type"] === "/cosmos.bank.v1beta1.MsgSend",
+  );
+  if (!send) {
     reasons.push("Transaction is not a seal bank send.");
     return base;
   }
-  try {
-    const decoded = MsgSend.decode(Uint8Array.from(atob(send.value), (c) => c.charCodeAt(0)));
-    if (decoded.toAddress !== args.recipient) {
-      reasons.push(`Recipient in the transaction (${decoded.toAddress}) is not ${args.recipient}.`);
+  // Protobuf Any shape: decode the base64 value. JSON shape: read the plain
+  // to_address field the REST endpoint returns.
+  let toAddress: string | null = null;
+  if (send.type_url && send.value) {
+    try {
+      const decoded = MsgSend.decode(Uint8Array.from(atob(send.value), (c) => c.charCodeAt(0)));
+      toAddress = decoded.toAddress;
+    } catch {
+      reasons.push("Bank send message could not be decoded.");
       return base;
     }
-  } catch {
+  } else {
+    toAddress = send.to_address ?? null;
+  }
+  if (!toAddress) {
     reasons.push("Bank send message could not be decoded.");
+    return base;
+  }
+  if (toAddress !== args.recipient) {
+    reasons.push(`Recipient in the transaction (${toAddress}) is not ${args.recipient}.`);
     return base;
   }
   if (!base.released) {
